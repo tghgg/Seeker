@@ -1,0 +1,150 @@
+[gd_scene load_steps=15 format=2]
+
+[ext_resource path="res://icon.png" type="Texture" id=1]
+[ext_resource path="res://src/Templates/Layer.gd" type="Script" id=2]
+[ext_resource path="res://assets/textures/bg.png" type="Texture" id=3]
+[ext_resource path="res://assets/textures/dialog_box.png" type="Texture" id=4]
+[ext_resource path="res://assets/characters/snek/snek.png" type="Texture" id=5]
+[ext_resource path="res://assets/textures/light/player_light.png" type="Texture" id=6]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Disable character collision whenever there is only sideway movement
+func _ready() -> void:
+	if global.get_top_down():
+		get_node(\"BodyShape\").disabled = false
+	else: 
+		get_node(\"BodyShape\").disabled = true
+
+# Dialogue handler 
+func talk() -> void:
+#	print(\"talking to \" + self.name)
+	global.set_can_talk(false)
+	if has_node(\"TalkBubble\"):
+		$TalkBubble.play_animation()
+	MSG.start_dialogue(interaction_script, self)
+	# Add dynamic events below
+	yield(global, 'dialogue_finished')
+	if has_node(\"TalkBubble\"):
+		$TalkBubble.stop_animation()
+	$MovementHandler.play(\"walk_away\")
+	interaction_script = \"\"
+"
+
+[sub_resource type="SpriteFrames" id=2]
+animations = [ {
+"frames": [ ExtResource( 5 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 59.8262, 77.1807 )
+
+[sub_resource type="RectangleShape2D" id=4]
+extents = Vector2( 21.5066, 35.7539 )
+
+[sub_resource type="CapsuleShape2D" id=5]
+radius = 22.0568
+height = 58.3779
+
+[sub_resource type="SpriteFrames" id=6]
+animations = [ {
+"frames": [ ExtResource( 1 ), ExtResource( 4 ), ExtResource( 3 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="Animation" id=7]
+resource_name = "walk_away"
+length = 5.0
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 2, 5 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 2086.95, 785.976 ), Vector2( 1949.11, 602.185 ), Vector2( 1906.65, -137.382 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 3.3 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 1,
+"values": [ true, false ]
+}
+
+[sub_resource type="RectangleShape2D" id=8]
+extents = Vector2( 93.7317, 90.3475 )
+
+[node name="Snek" type="KinematicBody2D"]
+scale = Vector2( -1, 1 )
+z_index = 2
+z_as_relative = false
+script = SubResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+color = Color( 0.0666667, 0.462745, 0.341176, 1 )
+voice_pitch = 1.853
+interaction_script = "res://Dialogues/Snek.json"
+
+[node name="Shadow" type="Sprite" parent="."]
+modulate = Color( 0.0901961, 0.0901961, 0.0901961, 0.509804 )
+position = Vector2( -13.7935, 91.0371 )
+scale = Vector2( 0.39591, 0.167214 )
+texture = ExtResource( 6 )
+
+[node name="Shadow2" type="Sprite" parent="."]
+modulate = Color( 0.0901961, 0.0901961, 0.0901961, 0.509804 )
+position = Vector2( 85.5195, 103.452 )
+scale = Vector2( 0.186714, 0.0788594 )
+texture = ExtResource( 6 )
+
+[node name="Sprite" type="AnimatedSprite" parent="."]
+position = Vector2( 0, -22.1202 )
+frames = SubResource( 2 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="."]
+position = Vector2( -11.1665, 26.9669 )
+shape = SubResource( 3 )
+disabled = true
+
+[node name="BodyShape2" type="CollisionShape2D" parent="."]
+position = Vector2( 87.2573, 71.1001 )
+shape = SubResource( 4 )
+
+[node name="InteractableArea" type="Area2D" parent="."]
+scale = Vector2( 2.73996, 2.46791 )
+monitoring = false
+
+[node name="CollisionBody2D" type="CollisionShape2D" parent="InteractableArea"]
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 5 )
+
+[node name="Face" type="AnimatedSprite" parent="."]
+visible = false
+frames = SubResource( 6 )
+
+[node name="MovementHandler" type="AnimationPlayer" parent="."]
+anims/walk = SubResource( 7 )
+
+[node name="LayerSystem" type="Area2D" parent="."]
+monitorable = false
+script = ExtResource( 2 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LayerSystem"]
+position = Vector2( 20.8638, -53.8989 )
+shape = SubResource( 8 )

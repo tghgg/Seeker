@@ -1,0 +1,53 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		if get_parent().get_parent().exit_path_count < 1:
+			get_parent().get_parent().exit_path_count += 1
+			global.set_can_talk(false)
+			MSG.start_dialogue(interaction_script, self)
+		else:
+			interaction_script = \"res://assets/dialogues/Demo-End.json\"
+			get_node(\"../../Transition\").fade_in()
+			yield(get_tree().create_timer(1.0),\"timeout\")
+			global.set_can_talk(false)
+			MSG.start_dialogue(interaction_script, self)
+			yield(global, \"dialogue_finished\")
+			get_node(\"../../Transition\").fade_out()
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+
+func _on_InteractableArea_area_entered(area: Area2D):
+	if area.get_parent().name == global.current_player_name:
+		if get_parent().get_parent().exit_path_count < 2:
+			talk()
+			get_parent().get_parent().exit_path_count += 1
+		else:
+			interaction_script = load(\"res://assets/dialogues/Demo-End.json\")
+			talk()
+		yield(global, \"dialogue_finished\")
+"
+
+[sub_resource type="CapsuleShape2D" id=2]
+
+[node name="InteractableObject" type="KinematicBody2D"]
+z_index = 1
+script = SubResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="InteractableArea" type="Area2D" parent="."]
+scale = Vector2( 2.73996, 2.46791 )
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractableArea"]
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 2 )

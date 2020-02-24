@@ -1,0 +1,199 @@
+[gd_scene load_steps=15 format=2]
+
+[ext_resource path="res://assets/textures/levels/landing.png" type="Texture" id=1]
+[ext_resource path="res://src/Templates/Effects/Moonlight.tscn" type="PackedScene" id=3]
+[ext_resource path="res://src/Templates/Transition.tscn" type="PackedScene" id=4]
+[ext_resource path="res://src/Templates/Player.tscn" type="PackedScene" id=5]
+[ext_resource path="res://src/Scripts/ExitNode.gd" type="Script" id=6]
+[ext_resource path="res://src/Templates/Effects/Fog.tscn" type="PackedScene" id=7]
+[ext_resource path="res://assets/textures/fog.png" type="Texture" id=8]
+[ext_resource path="res://src/Templates/Effects/ShinySmall.tscn" type="PackedScene" id=9]
+[ext_resource path="res://src/Templates/CanvasTint.tscn" type="PackedScene" id=10]
+[ext_resource path="res://src/Templates/CGHandler.tscn" type="PackedScene" id=11]
+[ext_resource path="res://assets/textures/levels/static.png" type="Texture" id=15]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+export (bool) var is_top_down := true
+
+onready var player := $Characters/Seeker
+onready var UI := $Characters/Seeker/Camera2D/UI
+
+# Set up the scene
+func _ready() -> void:
+	# Reset the reference to camera for the MSG_Parser 
+	MSG.camera = get_node('Characters/%s/Camera2D' % global.current_player_name)
+	# Set global reference variables
+	global.set_current_scene(self.name)
+	global.set_can_talk(true)
+	
+	# Disable the tint momentarily
+	#$BG/Map/CanvasModulate/AnimationPlayer.play_backwards(\"set_tint\")
+	
+	# Fade in the scene
+	$Transition.visible = true
+	$Transition.fade_out()
+	
+	# Play the level's theme
+	GlobalMusicPlayer.set_music(\"res://assets/music/slow_low.ogg\")
+	
+	# Set the position of the player according to the last time 
+	# the player was in this scene
+	if (global.player_exit_points.has(self.name)):
+		player.global_position = global.player_exit_points[self.name].position
+		# Disable the exit node the player used previously
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = false
+		yield(get_tree().create_timer(2.5), \"timeout\")
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = true
+	
+	# SAVE DATA HANDLING HERE
+	# Usually will set up story stuff based on the save data
+	var save_data = global.get_save_data()
+	if save_data.has(self.name):
+		print(\"Loading from save\")
+		if not save_data[self.name][\"dialogue_finished\"]:
+			player.talk()
+			$CGHandler.fade_in()
+			$BG/Map/CanvasModulate.set_visible(false)
+			yield(global, \"dialogue_finished\")
+			$BG/Map/CanvasModulate.set_visible(true)
+			$CGHandler.fade_out()
+			global.set_save_data(\"global\", {
+				\"current_scene\": self.filename
+			})
+			global.set_save_data(self.name, {
+				\"dialogue_finished\": true,
+				\"current_position\": player.get_global_position()
+			})
+	else: 
+		print(\"Creating new save entry for this level\")
+		# Update save data and autosave
+		UI.popup_element(\"SaveIndicator\", 3)
+		player.talk()
+		$CGHandler.fade_in()
+		$BG/Map/CanvasModulate.set_visible(false)
+		yield(global, \"dialogue_finished\")
+		$BG/Map/CanvasModulate.set_visible(true)
+		$CGHandler.fade_out()
+		global.set_save_data(\"global\", {
+			\"current_scene\": self.filename
+		})
+		global.set_save_data(self.name, {
+			\"dialogue_finished\": true,
+			\"current_position\": player.get_global_position()
+		})
+
+# Method for other nodes to use
+# Fade to black and freeze player input and movement
+func change_scene(scene: String, time:=1.5) -> void:
+	global.set_can_talk(false)
+	$Transition.fade_in(time)
+	yield(get_tree().create_timer(time), \"timeout\")
+	print(get_tree().change_scene(scene))
+	
+"
+
+[sub_resource type="StreamTexture" id=2]
+flags = 4
+load_path = "res://.import/moonlight.png-57b706f1ec91307179cdec4dccea3ee9.stex"
+
+[sub_resource type="GDScript" id=3]
+script/source = "extends Node2D
+
+func emit_all() -> void:
+	for node in self.get_children():
+		node.set_emitting(true)
+
+func stop_all_emission() -> void:
+	for node in self.get_children():
+		node.set_emitting(false)
+"
+
+[node name="Landing" type="Node2D" groups=[
+"level_root",
+]]
+script = SubResource( 1 )
+
+[node name="BG" type="Node2D" parent="."]
+
+[node name="Map" type="Sprite" parent="BG"]
+texture = ExtResource( 1 )
+centered = false
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Bounds" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+polygon = PoolVector2Array( -128, -128, 4096, -128, 4096, 0, -128, 0 )
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+polygon = PoolVector2Array( 1035.8, 3.27658, 1042.43, 53.6966, 1123.37, 157.19, 1108.77, 219.552, 1153.88, 272.625, 1169.81, 327.026, 1209.61, 348.255, 1287.9, 340.294, 1509.48, 384.08, 1550.61, 398.675, 1636.86, 419.905, 1707.18, 459.71, 1754.94, 518.091, 1757.6, 559.223, 1715.14, 630.873, 1711.16, 648.122, 1553.26, 706.503, 1159.19, 799.382, 1067.64, 808.669, 913.727, 775.498, 946.898, 734.366, 917.707, 699.868, 840.75, 683.946, 781.042, 640.161, 705.412, 634.853, 528.943, 741, 336.55, 755.596, 307.36, 731.713, 235.71, 733.039, 279.496, 695.888, 271.535, 668.024, 153.446, 649.448, 160.081, 617.604, 214.481, 516.764, 341.858, 455.73, 474.542, 423.885, 587.323, 382.753, 706.739, 357.543, 804.926, 356.216, 846.058, 356.216, 881.882, 333.66, 892.497, 293.855, 892.497, 216.898, 865.96, 153.21, 895.151, 0.622849, 838.097, -2.03084, -9.75522, 577.799, 230.403, 989.12, 1870.38, 966.563, 1869.05, 0.622711 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map"]
+position = Vector2( 958, 0 )
+script = ExtResource( 6 )
+exit_scene = "res://src/Scenes/LandingPath.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="CanvasModulate" parent="BG/Map" instance=ExtResource( 10 )]
+color = Color( 0.0313726, 0.0392157, 0.0392157, 1 )
+
+[node name="Moonlight" parent="BG/Map" instance=ExtResource( 3 )]
+texture = SubResource( 2 )
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Seeker" parent="Characters" instance=ExtResource( 5 )]
+position = Vector2( 432.029, 539.438 )
+color = Color( 1, 1, 1, 1 )
+interaction_script = "res://assets/dialogues/Landing.json"
+
+[node name="Effects" type="Node2D" parent="."]
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Fog" parent="Effects" instance=ExtResource( 7 )]
+modulate = Color( 0.00392157, 0.717647, 0.980392, 1 )
+position = Vector2( 926.188, 532.526 )
+
+[node name="Fog2" parent="Effects" instance=ExtResource( 7 )]
+modulate = Color( 0.00392157, 0.717647, 0.980392, 1 )
+position = Vector2( 1758.97, 795.314 )
+
+[node name="Fog3" parent="Effects" instance=ExtResource( 7 )]
+modulate = Color( 0.00392157, 0.717647, 0.980392, 1 )
+position = Vector2( 1814.49, 162.403 )
+
+[node name="Fog4" type="Sprite" parent="Effects"]
+modulate = Color( 0.00392157, 0.717647, 0.980392, 1 )
+self_modulate = Color( 0, 1, 0.717647, 1 )
+position = Vector2( 926.188, 532.526 )
+scale = Vector2( 4.14113, 1.93245 )
+z_index = 100
+z_as_relative = false
+texture = ExtResource( 8 )
+
+[node name="Particles" type="Node2D" parent="."]
+script = SubResource( 3 )
+
+[node name="MoonlightParticle" parent="Particles" instance=ExtResource( 9 )]
+preprocess = 20.0
+
+[node name="CGHandler" parent="." instance=ExtResource( 11 )]
+
+[node name="BG" parent="CGHandler" index="0"]
+texture = ExtResource( 15 )
+
+[node name="Transition" parent="." instance=ExtResource( 4 )]
+visible = true
+
+[editable path="Characters/Seeker"]
+
+[editable path="CGHandler"]

@@ -1,0 +1,219 @@
+[gd_scene load_steps=23 format=2]
+
+[ext_resource path="res://src/Templates/Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://icon.png" type="Texture" id=7]
+[ext_resource path="res://assets/textures/bg.png" type="Texture" id=8]
+[ext_resource path="res://src/Templates/Transition.tscn" type="PackedScene" id=9]
+[ext_resource path="res://assets/textures/levels/tent.png" type="Texture" id=10]
+[ext_resource path="res://assets/textures/dialog_box.png" type="Texture" id=11]
+[ext_resource path="res://assets/characters/snek/tent_1.png" type="Texture" id=12]
+[ext_resource path="res://src/Scripts/ExitNode.gd" type="Script" id=13]
+[ext_resource path="res://src/Scripts/TalkBubble.gd" type="Script" id=15]
+[ext_resource path="res://assets/sfx/Floor Creaking.ogg" type="AudioStream" id=16]
+[ext_resource path="res://assets/animations/sleep_bubble/frame0002.png" type="Texture" id=17]
+[ext_resource path="res://assets/animations/sleep_bubble/frame0000.png" type="Texture" id=18]
+[ext_resource path="res://assets/animations/sleep_bubble/frame0001.png" type="Texture" id=19]
+
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+export (bool) var is_top_down := true
+
+onready var player := $Characters/Seeker as KinematicBody2D
+
+# Set up the scene
+func _ready() -> void:
+	# Reset the reference to camera for the MSG_Parser 
+	MSG.camera = get_node('Characters/%s/Camera2D' % global.current_player_name)
+	# Set global reference variables
+	global.set_current_scene(self.name)
+	global.set_can_talk(true)
+	# Fade in the scene
+	$Transition.visible = true
+	$Transition.fade_out()
+	
+	# Set up story stuff here
+	$Characters/Sleeper/SleepBubble.play_animation(\"default\", false)
+	
+	# Set the position of the player according to the last time 
+	# the player was in this scene
+	if (global.player_exit_points.has(self.name)):
+		player.position = global.player_exit_points[self.name].position
+		# Disable the exit node the player used previously
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = false
+		yield(get_tree().create_timer(2.5), \"timeout\")
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = true
+
+# Method for other nodes to use
+# Fade to black and freeze player input and movement
+func change_scene(scene: String, time:=1.5) -> void:
+	global.set_can_talk(false)
+	$Transition.fade_in(time)
+	yield(get_tree().create_timer(time), \"timeout\")
+	get_tree().change_scene(scene)
+"
+
+[sub_resource type="Environment" id=2]
+background_mode = 4
+glow_bloom = 0.06
+
+[sub_resource type="GDScript" id=3]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Disable character collision whenever there is only sideway movement
+func _ready() -> void:
+	if global.get_top_down():
+		get_node(\"BodyShape\").disabled = false
+	else: 
+		get_node(\"BodyShape\").disabled = true
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		global.set_can_talk(false)
+		MSG.start_dialogue(interaction_script, self)
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+"
+
+[sub_resource type="SpriteFrames" id=4]
+animations = [ {
+"frames": [ ExtResource( 12 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="CapsuleShape2D" id=5]
+
+[sub_resource type="CapsuleShape2D" id=6]
+
+[sub_resource type="SpriteFrames" id=7]
+animations = [ {
+"frames": [ ExtResource( 7 ), ExtResource( 11 ), ExtResource( 8 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="SpriteFrames" id=8]
+animations = [ {
+"frames": [ ExtResource( 18 ), ExtResource( 19 ), ExtResource( 17 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="Animation" id=9]
+length = 0.2
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.2 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ) ]
+}
+
+[node name="Tent" type="Node2D" groups=[
+"level_root",
+]]
+script = SubResource( 1 )
+
+[node name="BG" type="Node2D" parent="."]
+
+[node name="Map" type="Sprite" parent="BG"]
+position = Vector2( -2.75488, 4.70297 )
+scale = Vector2( 1.87192, 1.87192 )
+texture = ExtResource( 10 )
+centered = false
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Bounds" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+position = Vector2( -324.684, -83.2519 )
+polygon = PoolVector2Array( 769.492, 558.503, 617.557, 514.795, 736.191, 227.576, 862.11, 171.381, 988.029, 219.251, 1157.66, 466.925, 952.329, 554.58, 963.325, 515.769, 1054.63, 452.356, 983.866, 354.535, 753.883, 357.657, 692.484, 473.169, 776.386, 533.234, 963.325, 515.122, 953.623, 555.226 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Bounds"]
+position = Vector2( 546.342, 452.683 )
+script = ExtResource( 13 )
+exit_scene = "res://src/Scenes/Expanse.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Bounds/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="BG"]
+environment = SubResource( 2 )
+
+[node name="CanvasModulate" type="CanvasModulate" parent="BG"]
+color = Color( 0.564706, 0.564706, 0.721569, 1 )
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Sleeper" type="KinematicBody2D" parent="Characters"]
+position = Vector2( 1022.88, 483.793 )
+z_index = 1
+script = SubResource( 3 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="AnimatedSprite" parent="Characters/Sleeper"]
+z_as_relative = false
+frames = SubResource( 4 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="Characters/Sleeper"]
+shape = SubResource( 5 )
+disabled = true
+
+[node name="InteractableArea" type="Area2D" parent="Characters/Sleeper"]
+scale = Vector2( 2.73996, 2.46791 )
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Characters/Sleeper/InteractableArea"]
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 6 )
+
+[node name="Face" type="AnimatedSprite" parent="Characters/Sleeper"]
+visible = false
+frames = SubResource( 7 )
+
+[node name="MovementHandler" type="AnimationPlayer" parent="Characters/Sleeper"]
+
+[node name="SleepBubble" type="Node2D" parent="Characters/Sleeper"]
+modulate = Color( 1, 1, 1, 0 )
+light_mask = 2
+position = Vector2( 17.3669, 54.9782 )
+z_index = 999
+script = ExtResource( 15 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="Characters/Sleeper/SleepBubble"]
+light_mask = 2
+position = Vector2( 57.2144, -153.136 )
+frames = SubResource( 8 )
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="Characters/Sleeper/SleepBubble"]
+stream = ExtResource( 16 )
+volume_db = 3.105
+pitch_scale = 9.08
+attenuation = 0.933033
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Characters/Sleeper/SleepBubble"]
+anims/create_bubble = SubResource( 9 )
+
+[node name="Seeker" parent="Characters" instance=ExtResource( 1 )]
+position = Vector2( 1008.18, 632.722 )
+
+[node name="Transition" parent="." instance=ExtResource( 9 )]

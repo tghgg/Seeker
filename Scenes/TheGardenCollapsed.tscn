@@ -1,0 +1,488 @@
+[gd_scene load_steps=30 format=2]
+
+[ext_resource path="res://src/Scripts/ExitNode.gd" type="Script" id=1]
+[ext_resource path="res://src/Templates/Player.tscn" type="PackedScene" id=2]
+[ext_resource path="res://particle.png" type="Texture" id=3]
+[ext_resource path="res://assets/textures/light/spot.png" type="Texture" id=4]
+[ext_resource path="res://assets/textures/light/ moonlight_particle.png" type="Texture" id=5]
+[ext_resource path="res://src/Templates/Layer.gd" type="Script" id=6]
+[ext_resource path="res://src/Templates/CanvasTint.tscn" type="PackedScene" id=7]
+[ext_resource path="res://src/Templates/CGHandler.tscn" type="PackedScene" id=8]
+[ext_resource path="res://assets/textures/levels/the_garden_overhang_glaciers.png" type="Texture" id=9]
+[ext_resource path="res://src/Templates/Transition.tscn" type="PackedScene" id=10]
+[ext_resource path="res://assets/textures/levels/the_garden_overhang_trees_dark.png" type="Texture" id=11]
+[ext_resource path="res://assets/textures/levels/the_garden_dark.png" type="Texture" id=12]
+[ext_resource path="res://assets/textures/levels/the_garden_overhang_dark.png" type="Texture" id=13]
+[ext_resource path="res://assets/textures/light/light.png" type="Texture" id=14]
+[ext_resource path="res://assets/textures/objects/tree.png" type="Texture" id=15]
+[ext_resource path="res://assets/textures/light/player_light.png" type="Texture" id=16]
+[ext_resource path="res://src/Templates/ObjectWithDialogue.tscn" type="PackedScene" id=17]
+[ext_resource path="res://assets/textures/objects/tree_fog.png" type="Texture" id=19]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+export (bool) var is_top_down := true
+
+export (int) var exit_path_count := 0
+
+onready var player := $Characters/Seeker
+onready var UI := $Characters/Seeker/Camera2D/UI
+
+# Set up the scene
+func _ready() -> void:
+	# Reset the reference to camera for the MSG_Parser 
+	MSG.camera = get_node('Characters/%s/Camera2D' % global.current_player_name)
+	
+	# SAVE DATA HANDLING HERE
+	# Usually will set up story stuff based on the save data
+	var save_data = global.get_save_data()
+	if save_data.has(self.name):
+		print(\"Loading from save\")
+		# Stuff to do
+	else: 
+		print(\"Creating new save entry for this level\")
+		# Update save data and autosave
+		UI.popup_element(\"SaveIndicator\", 3)
+		global.set_save_data(\"global\", {
+			\"current_scene\": self.filename
+		})
+		global.set_save_data(self.name, {
+			\"dialogue_finished\": false,
+			\"current_position\": player.get_global_position()
+		})
+		# Stuff to do
+	
+	# Set global reference variables
+	global.set_current_scene(self.name)
+	global.set_can_talk(true)
+	
+	player.talk()
+	
+	# Disable the tint momentarily
+	#$BG/Map/CanvasModulate/AnimationPlayer.play_backwards(\"set_tint\")
+	
+	# Fade in the scene
+	$Transition.visible = true
+	$Transition.fade_out()
+	
+	# Start emitting particles
+	if self.has_node(\"Particles\"): 
+		$Particles.emit_all()
+
+	# Play the level's theme
+	#GlobalMusicPlayer.set_music(\"res://assets/music/slow_low.ogg\")
+	
+	# Set the position of the player according to the last time 
+	# the player was in this scene
+	if (global.player_exit_points.has(self.name)):
+		player.global_position = global.player_exit_points[self.name].position
+		# Disable the exit node the player used previously
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = false
+		yield(get_tree().create_timer(2.5), \"timeout\")
+		get_node(global.player_exit_points[self.name].exit_node).monitoring = true
+
+# Method for other nodes to use
+# Fade to black and freeze player input and movement
+func change_scene(scene: String, time:=1.5) -> void:
+	global.set_can_talk(false)
+	$Transition.fade_in(time)
+	yield(get_tree().create_timer(time), \"timeout\")
+	print(get_tree().change_scene(scene))
+	
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 49.8593, 48.7357 )
+
+[sub_resource type="CapsuleShape2D" id=3]
+radius = 50.2667
+height = 121.948
+
+[sub_resource type="GDScript" id=4]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		global.set_can_talk(false)
+		MSG.start_dialogue(interaction_script, self)
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+
+func _on_InteractableArea_area_entered(area: Area2D):
+	if area.get_parent().name == global.current_player_name:
+		talk()
+		yield(global, \"dialogue_finished\")
+		self.queue_free()
+"
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 58.9275, 67.1149 )
+
+[sub_resource type="CapsuleShape2D" id=6]
+radius = 27.9989
+height = 121.948
+
+[sub_resource type="GDScript" id=11]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		global.set_can_talk(false)
+		MSG.start_dialogue(interaction_script, self)
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+"
+
+[sub_resource type="CapsuleShape2D" id=7]
+radius = 24.0959
+height = 33.1196
+
+[sub_resource type="GDScript" id=8]
+script/source = "extends Node2D
+
+func emit_all() -> void:
+	for node in self.get_children():
+		node.set_emitting(true)
+		node.set_pre_process_time(node.get_lifetime()/2.0)
+
+func stop_all_emission() -> void:
+	for node in self.get_children():
+		node.set_emitting(false)
+"
+
+[sub_resource type="ParticlesMaterial" id=9]
+render_priority = 10
+lifetime_randomness = 0.1
+emission_shape = 2
+emission_box_extents = Vector3( 2000, 50, 1 )
+flag_disable_z = true
+direction = Vector3( 0, 1, 0 )
+gravity = Vector3( 3, 5, 0 )
+angular_velocity = 75.0
+angular_velocity_random = 0.75
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+tangential_accel = 0.5
+tangential_accel_random = 1.0
+damping = 3.0
+angle = 117.7
+angle_random = 0.5
+scale = 0.5
+scale_random = 0.5
+color = Color( 0, 2.32, 2.31, 1 )
+
+[sub_resource type="ParticlesMaterial" id=10]
+render_priority = 10
+lifetime_randomness = 0.1
+emission_shape = 2
+emission_box_extents = Vector3( 2000, 50, 1 )
+flag_disable_z = true
+direction = Vector3( 0, -1, 0 )
+gravity = Vector3( 3, -10, 0 )
+angular_velocity = 75.0
+angular_velocity_random = 0.75
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+tangential_accel = 0.5
+tangential_accel_random = 1.0
+damping = 3.0
+angle = 117.7
+angle_random = 0.5
+scale = 0.2
+scale_random = 0.4
+color = Color( 0, 2.32157, 2.3098, 0.4 )
+
+[node name="TheGarden" type="Node2D" groups=[
+"level_root",
+]]
+script = SubResource( 1 )
+
+[node name="BG" type="Node2D" parent="."]
+
+[node name="Map" type="Sprite" parent="BG"]
+scale = Vector2( 2, 2 )
+texture = ExtResource( 12 )
+centered = false
+
+[node name="Bounds" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+polygon = PoolVector2Array( 815.5, 241.026, 711.543, 247.592, 648.074, 201.632, 515.664, 200.537, 457.667, 166.614, 280.392, 203.82, 224.583, 191.783, 242.091, 259.629, 214.734, 340.607, 176.434, 392.038, 269.449, 419.396, 253.034, 499.279, 282.58, 557.276, 305.413, 961.865, 955.202, 901.358, 969.242, 1072.39, 0.715637, 1070.52, 22.404, 2.16794, 1917.79, 13.1876, 1923.3, 1076.59, 967.965, 1071.11, 961.584, 901.358, 1653.31, 960.879, 1635.13, 540.862, 1657.01, 419.396, 1747.84, 392.038, 1682.68, 253.654, 1697.5, 203.82, 1602.3, 201.632, 1457.85, 156.766, 1444.72, 183.029, 1279.48, 191.783, 1216.01, 255.252, 1093.45, 246.497, 1022.32, 213.669, 1003.15, 79.3056, 898.468, 82.0605, 901.95, 219.14 )
+
+[node name="Bounds2" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="BG/Map/Bounds2"]
+polygon = PoolVector2Array( 1110.38, 357.979, 1181.06, 346.185, 1261.47, 372.988, 1289.54, 362.777, 1344.43, 381.922, 1401.86, 376.817, 1544.81, 513.384, 1634.15, 556.779, 1506.83, 793.602, 1242.32, 1011.15, 1227, 942.229, 1030.45, 679.306, 1043.21, 572.095, 1030.45, 537.634, 1064.91, 462.331, 1076.4, 372.988 )
+
+[node name="Bounds3" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="BG/Map/Bounds3"]
+polygon = PoolVector2Array( 300.317, 825.143, 395.812, 842.505, 659.726, 785.208, 729.177, 733.12, 793.42, 717.493, 984.232, 571.842, 1003.51, 481.359, 914.959, 295.578, 946.212, 182.72, 1003.51, 83.7517, 315.943, 99.3782 )
+
+[node name="Overhang" type="Sprite" parent="BG"]
+scale = Vector2( 2, 2 )
+z_index = 100
+texture = ExtResource( 11 )
+centered = false
+
+[node name="Overhang3" type="Sprite" parent="BG"]
+scale = Vector2( 2, 2 )
+z_index = 100
+texture = ExtResource( 9 )
+centered = false
+
+[node name="Overhang2" type="Sprite" parent="BG"]
+modulate = Color( 0.0313726, 0.0392157, 0.0392157, 1 )
+position = Vector2( -1852.5, -329.673 )
+scale = Vector2( 3.1544, 2.89127 )
+z_index = 100
+texture = ExtResource( 13 )
+centered = false
+
+[node name="Overhang4" type="Sprite" parent="BG"]
+visible = false
+modulate = Color( 0.0313726, 0.0392157, 0.0392157, 1 )
+position = Vector2( -533.883, 17.7531 )
+scale = Vector2( 2, 2 )
+z_index = 100
+texture = ExtResource( 13 )
+centered = false
+
+[node name="Light" type="Light2D" parent="BG"]
+light_mask = 3
+position = Vector2( 1215.85, 857.595 )
+scale = Vector2( 0.741996, 0.741996 )
+texture = ExtResource( 14 )
+texture_scale = 5.5
+color = Color( 0.184314, 0.713726, 0.764706, 1 )
+energy = 0.74
+mode = 2
+shadow_gradient_length = 0.3
+shadow_filter = 5
+shadow_filter_smooth = 3.0
+
+[node name="Sprite" type="Sprite" parent="BG/Light"]
+visible = false
+texture = ExtResource( 4 )
+
+[node name="Light2" type="Light2D" parent="BG"]
+light_mask = 3
+position = Vector2( 3114.18, 1535.25 )
+scale = Vector2( 0.741996, 0.741996 )
+texture = ExtResource( 14 )
+texture_scale = 5.5
+color = Color( 0.184314, 0.713726, 0.764706, 1 )
+energy = 0.74
+mode = 2
+shadow_gradient_length = 0.3
+shadow_filter = 5
+shadow_filter_smooth = 3.0
+
+[node name="Sprite" type="Sprite" parent="BG/Light2"]
+visible = false
+texture = ExtResource( 4 )
+
+[node name="Trees" type="Node2D" parent="BG"]
+
+[node name="Tree5" type="StaticBody2D" parent="BG/Trees"]
+position = Vector2( 2635.71, 388.003 )
+scale = Vector2( 2, 2 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Shadow" type="Sprite" parent="BG/Trees/Tree5"]
+modulate = Color( 0.0901961, 0.211765, 0.2, 0.462745 )
+position = Vector2( 0, 185.595 )
+scale = Vector2( 0.538494, 0.216785 )
+texture = ExtResource( 16 )
+
+[node name="Sprite" type="Sprite" parent="BG/Trees/Tree5"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="BG/Trees/Tree5"]
+position = Vector2( 0.578366, 147.748 )
+shape = SubResource( 2 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Trees/Tree5"]
+monitorable = false
+script = ExtResource( 6 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Trees/Tree5/LayerSystem"]
+position = Vector2( 0, -90.9385 )
+polygon = PoolVector2Array( -1.32263, 230.573, -119.913, 227.297, -163.811, 198.468, -203.777, 137.535, -212.085, 112.575, -212.085, 112.575, -191.677, 50.5578, -124.831, -72.2545, -124.831, -72.2545, -72.2907, -112.598, 2.76678, -140.744, 2.76678, -140.744, 44.9866, -133.239, 44.9866, -133.239, 88.1447, -106.03, 153.43, -25.388, 183.734, 37.0036, 212.256, 105.634, 150.682, 216.814, 94.9908, 227.952 )
+
+[node name="Light2D" type="Light2D" parent="BG/Trees/Tree5"]
+texture = ExtResource( 19 )
+texture_scale = 1.5
+energy = 2.5
+
+[node name="Tree4" type="StaticBody2D" parent="BG/Trees"]
+position = Vector2( 2994.47, 1294.99 )
+rotation = 0.432093
+scale = Vector2( 1.03035, 1.58022 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Shadow" type="Sprite" parent="BG/Trees/Tree4"]
+modulate = Color( 0.0901961, 0.211765, 0.2, 0.462745 )
+position = Vector2( 0, 185.595 )
+scale = Vector2( 0.538494, 0.216785 )
+texture = ExtResource( 16 )
+
+[node name="Sprite" type="Sprite" parent="BG/Trees/Tree4"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="BG/Trees/Tree4"]
+position = Vector2( 0.578366, 147.748 )
+shape = SubResource( 2 )
+
+[node name="Tree6" type="StaticBody2D" parent="BG/Trees"]
+position = Vector2( 2329.07, 1442.77 )
+rotation = -1.02434
+scale = Vector2( 1.03035, 1.58022 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Shadow" type="Sprite" parent="BG/Trees/Tree6"]
+modulate = Color( 0.0901961, 0.211765, 0.2, 0.462745 )
+position = Vector2( 0, 185.595 )
+scale = Vector2( 0.538494, 0.216785 )
+texture = ExtResource( 16 )
+
+[node name="Sprite" type="Sprite" parent="BG/Trees/Tree6"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="BG/Trees/Tree6"]
+position = Vector2( 0.578366, 147.748 )
+shape = SubResource( 2 )
+
+[node name="ExitNode" type="Area2D" parent="BG"]
+position = Vector2( 1929.75, 2143.87 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/LandingPath.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="ExitNode2" type="Area2D" parent="BG"]
+position = Vector2( 1906.07, 181.877 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Expanse.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/ExitNode2"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Seeker" parent="Characters" instance=ExtResource( 2 )]
+position = Vector2( 3230.48, 733.316 )
+color = Color( 1, 1, 1, 1 )
+interaction_script = "res://assets/dialogues/Trapped.json"
+
+[node name="Camera2D" parent="Characters/Seeker" index="0"]
+limit_right = 3840
+limit_bottom = 2160
+
+[node name="BlockedPath" parent="Characters" instance=ExtResource( 17 )]
+position = Vector2( 1932.48, 1931.2 )
+interaction_script = "res://assets/dialogues/Blocked.json"
+
+[node name="CollisionShape2D" parent="Characters/BlockedPath/InteractableArea" index="0"]
+shape = SubResource( 3 )
+
+[node name="Tree" type="KinematicBody2D" parent="Characters"]
+position = Vector2( 2618.46, 342.213 )
+z_index = 1
+script = SubResource( 4 )
+__meta__ = {
+"_edit_group_": true
+}
+interaction_script = "res://assets/dialogues/Tree.json"
+
+[node name="InteractableArea" type="Area2D" parent="Characters/Tree"]
+scale = Vector2( 2.73996, 2.46791 )
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Characters/Tree/InteractableArea"]
+position = Vector2( 66.488, -16.4807 )
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 5 )
+
+[node name="BlockedPath2" parent="Characters" instance=ExtResource( 17 )]
+position = Vector2( 1879.28, 228.209 )
+interaction_script = "res://assets/dialogues/Blocked.json"
+
+[node name="CollisionShape2D" parent="Characters/BlockedPath2/InteractableArea" index="0"]
+shape = SubResource( 6 )
+
+[node name="CrushedTree" parent="Characters" instance=ExtResource( 17 )]
+position = Vector2( 3135.31, 1037.71 )
+script = SubResource( 11 )
+interaction_script = "res://assets/dialogues/Crushed-Tree.json"
+
+[node name="CollisionShape2D" parent="Characters/CrushedTree/InteractableArea" index="0"]
+shape = SubResource( 7 )
+
+[node name="Particles" type="Node2D" parent="."]
+script = SubResource( 8 )
+
+[node name="MoonlightParticle" type="Particles2D" parent="Particles"]
+light_mask = 3
+position = Vector2( 1890.37, -143.156 )
+scale = Vector2( 0.985994, 1.0981 )
+z_index = 100
+z_as_relative = false
+emitting = false
+amount = 5
+lifetime = 50.0
+preprocess = 30.0
+visibility_rect = Rect2( -2000, 0, 4000, 2500 )
+local_coords = false
+draw_order = 1
+process_material = SubResource( 9 )
+texture = ExtResource( 5 )
+
+[node name="MoonlightParticle2" type="Particles2D" parent="Particles"]
+light_mask = 3
+position = Vector2( 1918.78, 2148.53 )
+scale = Vector2( 0.985994, 1.0981 )
+z_index = 100
+z_as_relative = false
+emitting = false
+amount = 20
+lifetime = 30.0
+preprocess = 50.0
+visibility_rect = Rect2( -2000, 0, 4000, -2500 )
+local_coords = false
+draw_order = 1
+process_material = SubResource( 10 )
+texture = ExtResource( 3 )
+
+[node name="CGHandler" parent="." instance=ExtResource( 8 )]
+
+[node name="Transition" parent="." instance=ExtResource( 10 )]
+
+[node name="CanvasModulate" parent="." instance=ExtResource( 7 )]
+color = Color( 0.0235294, 0.0392157, 0.0392157, 1 )
+
+[editable path="Characters/Seeker"]
+
+[editable path="Characters/BlockedPath"]
+
+[editable path="Characters/BlockedPath2"]
+
+[editable path="Characters/CrushedTree"]

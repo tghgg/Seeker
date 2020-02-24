@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/textures/light/moonlight.png" type="Texture" id=1]
+[ext_resource path="res://assets/textures/light/spot.png" type="Texture" id=2]
+
+[node name="Moonlight" type="Light2D"]
+light_mask = 2
+position = Vector2( 827.276, 153.122 )
+texture = ExtResource( 1 )
+texture_scale = 5.5
+energy = 1.5
+shadow_gradient_length = 0.3
+shadow_filter = 5
+shadow_filter_smooth = 3.0
+
+[node name="Sprite" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 2 )

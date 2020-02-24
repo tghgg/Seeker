@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Area2D
+
+export (String, FILE) var interaction_script
+
+onready var root_node := self.get_parent().get_parent().get_parent()
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		global.set_can_talk(false)
+		MSG.start_dialogue(interaction_script, self)
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+	
+func _on_InteractableArea_area_entered(area: Area2D) -> void:
+	if area.get_parent() as KinematicBody2D:
+		if area.get_parent().name == global.current_player_name:
+			root_node.CG_handler.fade_in(\"BG\")
+			root_node.canvas_tint.play_backwards(\"set_tint\")
+			self.talk()
+			yield(global, \"dialogue_finished\")
+			root_node.CG_handler.fade_out(\"BG\")
+			root_node.canvas_tint.play(\"set_tint\")
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 121.953, 10 )
+
+[node name="InteractableArea" type="Area2D"]
+scale = Vector2( 2.73996, 2.46791 )
+monitorable = false
+script = SubResource( 1 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 2 )
+[connection signal="area_entered" from="." to="." method="_on_InteractableArea_area_entered"]

@@ -1,0 +1,41 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://src/Templates/Layer.gd" type="Script" id=1]
+[ext_resource path="res://assets/textures/light/player_light.png" type="Texture" id=2]
+[ext_resource path="res://assets/textures/objects/tree.png" type="Texture" id=3]
+[ext_resource path="res://assets/textures/objects/tree_fog.png" type="Texture" id=4]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 49.8593, 48.7357 )
+
+[node name="Tree" type="StaticBody2D"]
+position = Vector2( 1792.84, 911.263 )
+scale = Vector2( 2, 2 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Shadow" type="Sprite" parent="."]
+modulate = Color( 0.0901961, 0.211765, 0.2, 0.462745 )
+position = Vector2( 0, 185.595 )
+scale = Vector2( 0.538494, 0.216785 )
+texture = ExtResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 3 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="."]
+position = Vector2( 0.578366, 147.748 )
+shape = SubResource( 1 )
+
+[node name="LayerSystem" type="Area2D" parent="."]
+monitorable = false
+script = ExtResource( 1 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="LayerSystem"]
+position = Vector2( 0, -90.9385 )
+polygon = PoolVector2Array( -1.32263, 230.573, -119.913, 227.297, -163.811, 198.468, -203.777, 137.535, -212.085, 112.575, -212.085, 112.575, -191.677, 50.5578, -124.831, -72.2545, -124.831, -72.2545, -72.2907, -112.598, 2.76678, -140.744, 2.76678, -140.744, 44.9866, -133.239, 44.9866, -133.239, 88.1447, -106.03, 153.43, -25.388, 183.734, 37.0036, 212.256, 105.634, 150.682, 216.814, 94.9908, 227.952 )
+
+[node name="Light2D" type="Light2D" parent="."]
+texture = ExtResource( 4 )
+energy = 1.2

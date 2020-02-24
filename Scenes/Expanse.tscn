@@ -1,0 +1,800 @@
+[gd_scene load_steps=29 format=2]
+
+[ext_resource path="res://src/Scripts/ExitNode.gd" type="Script" id=1]
+[ext_resource path="res://assets/textures/dark_snow.png" type="Texture" id=2]
+[ext_resource path="res://src/Templates/Player.tscn" type="PackedScene" id=3]
+[ext_resource path="res://assets/textures/light/moonlight.png" type="Texture" id=4]
+[ext_resource path="res://assets/textures/light/ moonlight_particle.png" type="Texture" id=5]
+[ext_resource path="res://src/Templates/NewScene.gd" type="Script" id=6]
+[ext_resource path="res://src/Templates/Character.tscn" type="PackedScene" id=7]
+[ext_resource path="res://src/Scripts/BG.gd" type="Script" id=8]
+[ext_resource path="res://assets/textures/dialog_box.png" type="Texture" id=9]
+[ext_resource path="res://assets/textures/levels/map.png" type="Texture" id=10]
+[ext_resource path="res://assets/textures/bg.png" type="Texture" id=11]
+[ext_resource path="res://icon.png" type="Texture" id=12]
+[ext_resource path="res://src/Templates/LayerSystem.tscn" type="PackedScene" id=13]
+[ext_resource path="res://assets/characters/snek/tent_1.png" type="Texture" id=14]
+[ext_resource path="res://assets/textures/objects/tent.png" type="Texture" id=15]
+[ext_resource path="res://src/Templates/Layer.gd" type="Script" id=16]
+[ext_resource path="res://assets/textures/light/spot.png" type="Texture" id=17]
+[ext_resource path="res://src/Templates/ExitNode.tscn" type="PackedScene" id=18]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 109.528, 78.7237 )
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends \"res://src/Scripts/NPC.gd\"
+
+# Disable character collision whenever there is only sideway movement
+func _ready() -> void:
+	if global.get_top_down():
+		get_node(\"BodyShape\").disabled = false
+	else: 
+		get_node(\"BodyShape\").disabled = true
+
+# Dialogue handler 
+func talk() -> void:
+	# Talk if the character has dialogue
+	if (interaction_script):
+		global.set_can_talk(false)
+		MSG.start_dialogue(interaction_script, self)
+	else: 
+		print('No dialogue available for the character')
+	# Some space to add dynamic events here
+	#yield(global, 'dialogue_finished')
+"
+
+[sub_resource type="SpriteFrames" id=3]
+animations = [ {
+"frames": [ ExtResource( 14 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="CapsuleShape2D" id=4]
+
+[sub_resource type="CapsuleShape2D" id=5]
+radius = 12.9426
+height = 2.76431
+
+[sub_resource type="SpriteFrames" id=6]
+animations = [ {
+"frames": [ ExtResource( 12 ), ExtResource( 9 ), ExtResource( 11 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="OccluderPolygon2D" id=7]
+closed = false
+cull_mode = 1
+polygon = PoolVector2Array( 106.872, -0.171021, -12.405, -40.3482, -76.7358, -41.2176, -102.574, -5.63483 )
+
+[sub_resource type="GDScript" id=8]
+script/source = "extends Node2D
+
+func emit_all() -> void:
+	for node in self.get_children():
+		node.set_emitting(true)
+
+func stop_all_emission() -> void:
+	for node in self.get_children():
+		node.set_emitting(false)
+"
+
+[sub_resource type="ParticlesMaterial" id=9]
+render_priority = 10
+lifetime_randomness = 0.1
+emission_shape = 2
+emission_box_extents = Vector3( 960, 50, 1 )
+flag_disable_z = true
+direction = Vector3( 0, 1, 0 )
+gravity = Vector3( 0, 15, 0 )
+angular_velocity = 75.0
+angular_velocity_random = 0.75
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+tangential_accel = 0.5
+tangential_accel_random = 1.0
+damping = 10.48
+angle = 117.7
+angle_random = 0.5
+scale = 0.5
+scale_random = 1.0
+color = Color( 0, 2.32, 2.31, 1 )
+
+[sub_resource type="ParticlesMaterial" id=10]
+render_priority = 10
+lifetime_randomness = 0.1
+emission_shape = 2
+emission_box_extents = Vector3( 2000, 50, 1 )
+flag_disable_z = true
+direction = Vector3( 0, 1, 0 )
+gravity = Vector3( 0, 5, 0 )
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+tangential_accel = 5.0
+tangential_accel_random = 1.0
+damping = 3.0
+angle = 117.7
+angle_random = 0.5
+scale = 0.5
+scale_random = 0.5
+color = Color( 0, 2.32, 2.31, 1 )
+
+[node name="Expanse" type="Node2D" groups=[
+"level_root",
+]]
+script = ExtResource( 6 )
+
+[node name="BG" type="Node2D" parent="."]
+
+[node name="Map" type="Sprite" parent="BG"]
+z_index = -2
+texture = ExtResource( 10 )
+centered = false
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Bounds" type="StaticBody2D" parent="BG/Map"]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+polygon = PoolVector2Array( -128, 2560, 4096, 2560, 4096, 0, 3840, 0, 3840, 2368, 0, 2368, 0, 0, -128, 0 )
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="BG/Map/Bounds"]
+polygon = PoolVector2Array( -128, -128, 4096, -128, 4096, 0, -128, 0 )
+
+[node name="Tents" type="Node2D" parent="BG/Map"]
+
+[node name="Tent" type="StaticBody2D" parent="BG/Map/Tents"]
+light_mask = 0
+position = Vector2( 2481.92, 467.644 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents/Tent"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents/Tent"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents/Tent"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents/Tent/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent3" type="StaticBody2D" parent="BG/Map/Tents"]
+light_mask = 0
+position = Vector2( 2468.62, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents/Tent3"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent3"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents/Tent3"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent3/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents/Tent3"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents/Tent3/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent4" type="StaticBody2D" parent="BG/Map/Tents"]
+light_mask = 0
+position = Vector2( 2929.56, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents/Tent4"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent4"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents/Tent4"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent4/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents/Tent4"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents/Tent4/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent2" type="StaticBody2D" parent="BG/Map/Tents"]
+light_mask = 0
+position = Vector2( 2929.56, 463.212 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents/Tent2"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent2"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents/Tent2"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents/Tent2/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents/Tent2"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents/Tent2/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tents2" type="Node2D" parent="BG/Map"]
+position = Vector2( -1108.03, 0 )
+
+[node name="Tent" type="StaticBody2D" parent="BG/Map/Tents2"]
+light_mask = 0
+position = Vector2( 2481.92, 467.644 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents2/Tent"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents2/Tent"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents2/Tent"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents2/Tent/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent3" type="StaticBody2D" parent="BG/Map/Tents2"]
+light_mask = 0
+position = Vector2( 2468.62, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents2/Tent3"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent3"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents2/Tent3"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent3/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents2/Tent3"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents2/Tent3/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent4" type="StaticBody2D" parent="BG/Map/Tents2"]
+light_mask = 0
+position = Vector2( 2929.56, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents2/Tent4"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent4"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents2/Tent4"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent4/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents2/Tent4"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents2/Tent4/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent2" type="StaticBody2D" parent="BG/Map/Tents2"]
+light_mask = 0
+position = Vector2( 2929.56, 463.212 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents2/Tent2"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent2"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents2/Tent2"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents2/Tent2/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents2/Tent2"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents2/Tent2/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tents3" type="Node2D" parent="BG/Map"]
+position = Vector2( -1108.03, 571.744 )
+
+[node name="Tent" type="StaticBody2D" parent="BG/Map/Tents3"]
+light_mask = 0
+position = Vector2( 2481.92, 467.644 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents3/Tent"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents3/Tent"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents3/Tent"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents3/Tent/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent3" type="StaticBody2D" parent="BG/Map/Tents3"]
+light_mask = 0
+position = Vector2( 2468.62, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents3/Tent3"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent3"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents3/Tent3"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent3/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents3/Tent3"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents3/Tent3/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent4" type="StaticBody2D" parent="BG/Map/Tents3"]
+light_mask = 0
+position = Vector2( 2929.56, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents3/Tent4"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent4"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents3/Tent4"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent4/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents3/Tent4"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents3/Tent4/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent2" type="StaticBody2D" parent="BG/Map/Tents3"]
+light_mask = 0
+position = Vector2( 2929.56, 463.212 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents3/Tent2"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent2"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents3/Tent2"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents3/Tent2/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents3/Tent2"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents3/Tent2/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tents4" type="Node2D" parent="BG/Map"]
+position = Vector2( -22.1606, 571.744 )
+
+[node name="Tent" type="StaticBody2D" parent="BG/Map/Tents4"]
+light_mask = 0
+position = Vector2( 2481.92, 467.644 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents4/Tent"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents4/Tent"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents4/Tent"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents4/Tent/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent3" type="StaticBody2D" parent="BG/Map/Tents4"]
+light_mask = 0
+position = Vector2( 2468.62, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents4/Tent3"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent3"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents4/Tent3"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent3/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents4/Tent3"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents4/Tent3/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent4" type="StaticBody2D" parent="BG/Map/Tents4"]
+light_mask = 0
+position = Vector2( 2929.56, 742.436 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents4/Tent4"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent4"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents4/Tent4"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent4/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents4/Tent4"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents4/Tent4/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="Tent2" type="StaticBody2D" parent="BG/Map/Tents4"]
+light_mask = 0
+position = Vector2( 2929.56, 463.212 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Map/Tents4/Tent2"]
+texture = ExtResource( 15 )
+
+[node name="BodyShape" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent2"]
+position = Vector2( 2.27197, -4.54416 )
+polygon = PoolVector2Array( -85.4219, -18.8554, 96.7222, -24.097, 167.483, 78.1133, -150.941, 96.4587 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map/Tents4/Tent2"]
+position = Vector2( -65.5195, 102.21 )
+script = ExtResource( 1 )
+exit_scene = "res://src/Scenes/Tent.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/Tents4/Tent2/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 452.093, 444.031, 645.654, 423.218, 651.898, 462.763, 448.971, 475.251 )
+
+[node name="LayerSystem" type="Area2D" parent="BG/Map/Tents4/Tent2"]
+monitorable = false
+script = ExtResource( 16 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BG/Map/Tents4/Tent2/LayerSystem"]
+position = Vector2( -4.12939, -80.9353 )
+shape = SubResource( 1 )
+
+[node name="ExitNode" type="Area2D" parent="BG/Map"]
+position = Vector2( 3740.83, 2327.03 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+exit_scene = "res://src/Scenes/Depths.tscn"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="BG/Map/ExitNode"]
+position = Vector2( -549.475, -448.552 )
+polygon = PoolVector2Array( 192.639, 33.9827, 644.593, -378.384, 644.593, 479.339, -364.881, 472.741 )
+
+[node name="ExitNode2" parent="BG/Map" instance=ExtResource( 18 )]
+position = Vector2( 2028.27, 2309.57 )
+exit_scene = "res://src/Scenes/TheGarden.tscn"
+
+[node name="CollisionPolygon2D" parent="BG/Map/ExitNode2" index="0"]
+position = Vector2( -494.738, -435.92 )
+polygon = PoolVector2Array( -1457.27, 426.456, 1111.14, 371.719, 1254.3, 493.825, -1537.27, 514.877 )
+
+[node name="CanvasModulate" type="CanvasModulate" parent="BG"]
+color = Color( 0.0313726, 0.0392157, 0.0392157, 1 )
+
+[node name="Moonlight" type="Light2D" parent="BG"]
+light_mask = 2
+position = Vector2( 1967.48, 634.669 )
+texture = ExtResource( 4 )
+texture_scale = 10.0
+energy = 0.7
+shadow_gradient_length = 10.0
+shadow_filter = 2
+shadow_filter_smooth = 3.0
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Sprite" type="Sprite" parent="BG/Moonlight"]
+visible = false
+texture = ExtResource( 17 )
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Sleeper" type="KinematicBody2D" parent="Characters"]
+position = Vector2( 2638.46, 874.637 )
+z_index = 1
+script = SubResource( 2 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="AnimatedSprite" parent="Characters/Sleeper"]
+frames = SubResource( 3 )
+
+[node name="BodyShape" type="CollisionShape2D" parent="Characters/Sleeper"]
+shape = SubResource( 4 )
+disabled = true
+
+[node name="InteractableArea" type="Area2D" parent="Characters/Sleeper"]
+scale = Vector2( 2.73996, 2.46791 )
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Characters/Sleeper/InteractableArea"]
+scale = Vector2( 2.41862, -1.36485 )
+shape = SubResource( 5 )
+
+[node name="Face" type="AnimatedSprite" parent="Characters/Sleeper"]
+visible = false
+frames = SubResource( 6 )
+
+[node name="MovementHandler" type="AnimationPlayer" parent="Characters/Sleeper"]
+
+[node name="Layer" parent="Characters/Sleeper" instance=ExtResource( 13 )]
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="Characters/Sleeper"]
+light_mask = 3
+occluder = SubResource( 7 )
+light_mask = 3
+
+[node name="TemplateCharacter" parent="Characters" instance=ExtResource( 7 )]
+position = Vector2( 2130.19, 874.155 )
+
+[node name="Seeker" parent="Characters" instance=ExtResource( 3 )]
+position = Vector2( 1969.47, 2013.04 )
+
+[node name="Camera2D" parent="Characters/Seeker" index="0"]
+limit_right = 3840
+limit_bottom = 2400
+
+[node name="Particles" type="Node2D" parent="."]
+position = Vector2( 1053.93, 0 )
+script = SubResource( 8 )
+
+[node name="BlackSnow" type="Particles2D" parent="Particles"]
+light_mask = 3
+position = Vector2( 722.521, -44.9473 )
+scale = Vector2( 0.985994, 1.0981 )
+z_index = 100
+z_as_relative = false
+emitting = false
+amount = 80
+lifetime = 50.0
+preprocess = 30.0
+visibility_rect = Rect2( -2000, 0, 4200, 2500 )
+local_coords = false
+draw_order = 1
+process_material = SubResource( 9 )
+texture = ExtResource( 2 )
+
+[node name="MoonlightParticle" type="Particles2D" parent="Particles"]
+light_mask = 3
+position = Vector2( 832.403, -168.681 )
+scale = Vector2( 0.985994, 1.0981 )
+z_index = 100
+z_as_relative = false
+emitting = false
+amount = 40
+lifetime = 70.0
+preprocess = 30.0
+visibility_rect = Rect2( -2000, 0, 4200, 2500 )
+local_coords = false
+draw_order = 1
+process_material = SubResource( 10 )
+texture = ExtResource( 5 )
+
+[node name="Transition" type="Node2D" parent="."]
+visible = false
+z_index = 1000
+z_as_relative = false
+script = ExtResource( 8 )
+
+[node name="BlackScreen" type="Sprite" parent="Transition"]
+modulate = Color( 0, 0, 0, 1 )
+position = Vector2( 904.716, 524.107 )
+scale = Vector2( 2508.56, 2830.28 )
+texture = ExtResource( 12 )
+
+[node name="FadeOut" type="Tween" parent="Transition"]
+playback_speed = 0.5
+playback/speed = 0.5
+
+[node name="FadeIn" type="Tween" parent="Transition"]
+
+[editable path="BG/Map/ExitNode2"]
+
+[editable path="Characters/Seeker"]

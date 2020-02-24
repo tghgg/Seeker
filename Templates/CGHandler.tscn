@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/textures/levels/the_garden.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+func fade_out(cg := \"BG\", time := 2.5) -> void:
+	# Fade out CG
+	get_node(\"FadeOut\").interpolate_property(get_node(cg), \"modulate:a\", 1.0, 0.0, time, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	get_node(\"FadeOut\").start()
+	global.get_player().get_node(\"Camera2D\").make_current()
+
+func fade_in(cg := \"BG\", start_dialogue := false, time := 2.5) -> void:
+	if not get_node(cg).is_visible():
+		get_node(cg).set_visible(true)
+	# Snap the camera to the CG
+	$Camera2D.make_current()
+	# Fade in CG
+	get_node(cg).z_index = 50
+	get_node(cg).z_as_relative = true
+	get_node(cg).set_visible(true)
+	get_node(\"FadeIn\").interpolate_property(get_node(cg), \"modulate:a\", 0.0, 1.0, time, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	get_node(\"FadeIn\").start()
+	# Start dialogue if specified
+	if start_dialogue:
+		self.get_parent().get_parent().talk()
+"
+
+[node name="CGHandler" type="Node2D"]
+position = Vector2( -8791.44, -5241.69 )
+z_index = 1000
+z_as_relative = false
+script = SubResource( 1 )
+
+[node name="BG" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 1 )
+centered = false
+
+[node name="FadeOut" type="Tween" parent="."]
+playback_speed = 0.5
+playback/speed = 0.5
+
+[node name="FadeIn" type="Tween" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+anchor_mode = 0
